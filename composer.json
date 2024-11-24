@@ -1,0 +1,22 @@
+{
+    "name": "orryv/path",
+    "description": "PHP library to handle URIs, URLs and paths in a clean way.",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "Orryv\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Orry Vandermeulen",
+            "email": "orryonline@hotmail.com"
+        }
+    ],
+    "require-dev": {
+        "phpunit/phpunit": "^11.4"
+    },
+    "require": {
+        "monolog/monolog": "^3.8"
+    }
+}
