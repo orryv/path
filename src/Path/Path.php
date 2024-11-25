@@ -6,8 +6,8 @@ use Orryv\Path\AbsolutePath;
 // use Orryv\Path\Web\AbsoluteWebURI;
 // use Orryv\Path\Generic\AbsoluteGenericURI;
 use Orryv\Path\Paths\AbsoluteUnixPath;
-// use Orryv\Path\Path\AbsoluteWindowsPath;
-// use Orryv\Path\Path\AbsoluteWindowsNetworkPath;
+use Orryv\Path\Paths\AbsoluteWindowsPath;
+use Orryv\Path\Paths\AbsoluteWindowsNetworkPath;
 use Orryv\Path\Exceptions\InvalidAbsoluteReferencePathFormatException;
 use Orryv\Path\Models\AbsoluteReferencePathFormat;
 
@@ -23,17 +23,18 @@ class Path {
      * 
      * @return AbsoluteURI
      */
-    public static function create(AbsoluteReferencePathFormat $path): AbsolutePath
+    public static function create(string $path): AbsolutePath
     {
         $path = self::validateUTF8($path);
         $path = self::normalizePath($path);
         $path = new AbsoluteReferencePathFormat($path);
+
         
         return match(true) {
             // self::isWebURI($path) => new AbsoluteWebURI($path),
             // self::isGenericURI($path) => new AbsoluteGenericURI($path),
-            // self::isWindowsPath($path) => new AbsoluteWindowsPath($path),
-            // self::isWindowsNetworkPath($path) => new AbsoluteWindowsNetworkPath($path),
+            self::isWindowsPath($path) => new AbsoluteWindowsPath($path),
+            self::isWindowsNetworkPath($path) => new AbsoluteWindowsNetworkPath($path),
             self::isUnixPath($path) => new AbsoluteUnixPath($path),
             default => throw new InvalidAbsoluteReferencePathFormatException('Unrecognized URI format')
         };
@@ -56,7 +57,7 @@ class Path {
             throw new InvalidAbsoluteReferencePathFormatException('Empty path');
         }
 
-        $path = str_replace('\\', '/', $path);
+        // $path = str_replace('\\', '/', $path);
         
         return $path;
     }
@@ -80,6 +81,10 @@ class Path {
 
         return $path;
     }
+
+    
+
+    
 
     /**
      * Check if the path is a HTTP/HTTPS URI.

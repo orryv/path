@@ -120,4 +120,14 @@ class NavigationTest extends TestCase
         $expected = '/test';
         $this->assertEquals($expected, $new->getReferencePath());
     }
+
+    public function testIfExceptionWhenAboveBaseFolderInRootFolder()
+    {
+        $this->expectException(AboveBaseFolderException::class);
+        $base_folder = Path::create(new AbsoluteReferencePathFormat('/var/bin/file.txt'))->asFile();
+        $instance = Path::create(new AbsoluteReferencePathFormat('/var/bin/folder/file.txt'))
+            ->setBasePath($base_folder)
+            ->asFile();
+        $new = $instance->cd('/..');
+    }
 }

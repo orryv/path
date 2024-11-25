@@ -18,13 +18,15 @@ abstract class AbsoluteSystemPath extends AbsolutePath
 
     public function asFile(): self
     {
-        $this->path_type = PathType::FILE;
+        $clone = clone $this;
 
-        if(!isset($this->path[count($this->path) - 1])){
+        $clone->path_type = PathType::FILE;
+
+        if(!isset($clone->path[count($clone->path) - 1])){
             throw new FileNotFoundException("Called asFile() on a path with no file name.");
         }
 
-        $file = $this->path[count($this->path) - 1];
+        $file = $clone->path[count($clone->path) - 1];
 
         if(strpos($file, '.') === false){
             $file_name = $file;
@@ -34,36 +36,38 @@ abstract class AbsoluteSystemPath extends AbsolutePath
             $file_extension = substr($file, strrpos($file, '.') + 1);
         }
 
-        $this->access_uri_file_name = rawurlencode($file_name);
-        $this->access_uri_file_extension = rawurlencode($file_extension);
+        $clone->access_uri_file_name = rawurlencode($file_name);
+        $clone->access_uri_file_extension = rawurlencode($file_extension);
 
-        $this->access_path_file_name = $file_name;
-        $this->access_path_file_extension = $file_extension;
+        $clone->access_path_file_name = $file_name;
+        $clone->access_path_file_extension = $file_extension;
 
-        $this->reference_path_file_name = $file_name;
-        $this->reference_path_file_extension = $file_extension;
+        $clone->reference_path_file_name = $file_name;
+        $clone->reference_path_file_extension = $file_extension;
 
-        $this->folder_path = array_slice($this->path, 0, count($this->path) - 1);
+        $clone->folder_path = array_slice($clone->path, 0, count($clone->path) - 1);
 
-        return $this;
+        return $clone;
     }
 
     public function asFolder(): self
     {
-        $this->path_type = PathType::FOLDER;
+        $clone = clone $this;
 
-        $this->access_uri_file_name = null;
-        $this->access_uri_file_extension = null;
+        $clone->path_type = PathType::FOLDER;
 
-        $this->access_path_file_name = null;
-        $this->access_path_file_extension = null;
+        $clone->access_uri_file_name = null;
+        $clone->access_uri_file_extension = null;
 
-        $this->reference_path_file_name = null;
-        $this->reference_path_file_extension = null;
+        $clone->access_path_file_name = null;
+        $clone->access_path_file_extension = null;
 
-        $this->folder_path = $this->path;
+        $clone->reference_path_file_name = null;
+        $clone->reference_path_file_extension = null;
 
-        return $this;
+        $clone->folder_path = $clone->path;
+
+        return $clone;
     }
 
     public function getOSFamily(): OSFamily
@@ -78,7 +82,7 @@ abstract class AbsoluteSystemPath extends AbsolutePath
 
     public function getReferencePath(): AbsoluteReferencePathFormat
     {
-        return new AbsoluteReferencePathFormat($this->reference_path_root_folder . implode('/', $this->path));
+        return new AbsoluteReferencePathFormat($this->reference_path_root_folder . implode('/', $this->path), $this->preserve_end_slash);
     }
 
     public function getAccessURI(): AbsoluteAccessURIFormat

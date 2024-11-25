@@ -1,9 +1,7 @@
 # Path
  Handles URI, URL, and file/folder paths
 
- # TODO
-
- - create setBaseFolder method to work with cd()
+ # TODOabb
 
 # Glossary
 
@@ -37,7 +35,7 @@
     - `C:\path\to\windows\file.txt` => `C:\`
     - `\\\\serverName\path\to\windows\network\share\file.txt` => `\\\\serverName\`
     - `https://website.com/path/to/page?query=string#fragment` => `https://website.com/`
-    - `ftp://path/to/file.txt` => `ftp://`
+    - `ftp://path/to/file.txt` => `ftp://` OR `ftp://user@host/`
 
 - **Base Folder**: The folder used to indicate where `cd()` can't go above.
 

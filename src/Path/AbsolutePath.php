@@ -13,6 +13,7 @@ abstract class AbsolutePath
 {
     protected PathType $path_type;
     protected string $ds; // For AccessPath directory separator
+    protected bool $preserve_end_slash = false;
     protected string $scheme;
     protected array $path;
     protected ?array $folder_path = null; // path without the file (applied after asFolder() or asFile())
@@ -41,7 +42,7 @@ abstract class AbsolutePath
         $this->parse($path);
     }
     
-    abstract protected function parse(string $path): void;
+    abstract protected function parse(AbsoluteReferencePathFormat $path): void;
 
     /**
      * Returns the AccessPath directory separator.
@@ -49,6 +50,23 @@ abstract class AbsolutePath
     public function ds(): string 
     {
         return $this->ds;
+    }
+
+    public function preserveEndSlash(bool $preserve = true): self 
+    {
+        $clone = clone $this;
+
+        $clone->preserve_end_slash = true;
+        $clone->access_uri_root_folder = rtrim($clone->access_uri_root_folder, '/') . '/';
+        $clone->access_path_root_folder = rtrim($clone->access_path_root_folder, $clone->ds) . $clone->ds;
+        $clone->reference_path_root_folder = rtrim($clone->reference_path_root_folder, '/') . '/';
+        $clone->path[] = '';
+        $clone->current_path[] = '';
+        if($clone->folder_path !== null) {
+            $clone->folder_path[] = '';
+        }
+
+        return $clone;
     }
 
     public function getScheme(): string 
@@ -86,6 +104,14 @@ abstract class AbsolutePath
         }
 
         return $this->folder_path;
+    }
+
+    /**
+     * Returns true if the instance know wether the path is a file or a folder.
+     */
+    public function isKnownPathType(): bool 
+    {
+        return $this->path_type !== PathType::UNKNOWN;
     }
 
     public function getHost(): ?array 
@@ -221,8 +247,23 @@ abstract class AbsolutePath
         // }
 
         $last_is_folder = false; // to track if last command was directory change
+        $no_folder_change = true; // to track if no folder change was made
         foreach ($commands as $command) {
             $cmds = explode('/', $command);
+
+            if(substr($command, 0, 1) === '/') {
+                $current_path = $this->base_path === null
+                    ? []
+                    : $this->base_path;
+
+                // Remove first element (empty string)
+                array_shift($cmds);
+
+                // Remove last element (empty string)
+                if($cmds[count($cmds) - 1] === '') {
+                    array_pop($cmds);
+                }
+            }
 
             foreach ($cmds as $cmd) {
                 if ($cmd === '.') {
@@ -255,11 +296,12 @@ abstract class AbsolutePath
                 } else {
                     $current_path[] = $cmd;
                     $last_is_folder = false;
+                    $no_folder_change = false;
                 }
             }
         }
 
-        if($last_is_folder) {
+        if($last_is_folder || $no_folder_change) {
             $clone->path_type = PathType::FOLDER;
             $clone->folder_path = $current_path;
         } else {
@@ -269,7 +311,7 @@ abstract class AbsolutePath
         
         $clone->path = $current_path;
         $clone->current_path = $current_path;
-        
+
         return $clone;
     }
 }
