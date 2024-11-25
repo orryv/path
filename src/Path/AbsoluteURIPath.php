@@ -5,8 +5,6 @@ namespace Orryv\Path;
 use Orryv\Path\Exceptions\FileNotFoundException;
 use Orryv\Path\AbsolutePath;
 use Orryv\Path\Enums\PathType;
-use Orryv\Path\Enums\OSFamily;
-use Orryv\Path\Enums\SystemPathLocationCategory;
 use Orryv\Path\Models\AbsoluteReferencePathFormat;
 use Orryv\Path\Models\AbsoluteAccessURIFormat;
 use Orryv\Path\Models\AbsoluteAccessPathFormat;
@@ -70,5 +68,73 @@ abstract class AbsoluteURIPath extends AbsolutePath
         }
 
         return $string;
+    }
+
+    public function getPort(): ?int
+    {
+        return $this->port;
+    }
+
+    public function withPort(?int $port): self
+    {
+        $clone = clone $this;
+
+        $clone->port = $port;
+
+        return $clone;
+    }
+
+    public function getQuery(): ?array
+    {
+        return $this->query;
+    }
+
+    public function withQuery(array $query): self
+    {
+        $clone = clone $this;
+
+        $clone->query = $query;
+
+        return $clone;
+    }
+
+    public function getQueryString(): ?string
+    {
+        $text = '';
+        foreach($this->query as $key => $value){
+            $text .= $key . ( ($value !== null) ? '='.$value : '' ) . '&';
+        }
+
+        return substr($text, 0, -1);
+    }
+
+    public function withQueryString(string $query): self
+    {
+        $clone = clone $this;
+
+        $query = explode('&', $query);
+        $elements = [];
+        foreach($query as $element){
+            $key_value = explode('=', $element);
+            $elements[$key_value[0]] = (isset($key_value[1])) ? $key_value[1] : null;
+        }
+
+        $clone->query = $elements;
+
+        return $clone;
+    }
+
+    public function getFragment(): ?string
+    {
+        return $this->fragment;
+    }
+
+    public function withFragment(string $fragment): self
+    {
+        $clone = clone $this;
+
+        $clone->fragment = $fragment;
+
+        return $clone;
     }
 }

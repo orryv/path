@@ -24,7 +24,7 @@ class AbsoluteWindowsNetworkPath extends AbsoluteSystemPath
         $this->ds = '\\';
         $this->scheme = 'FILE';
         $this->path = Utils::splitPathAndTrimSlashes($path, $this->preserve_end_slash);
-        $this->current_path = $this->path;
+        // $this->current_path = $this->path;
         $this->host = explode('.', $host);
         $this->access_uri_root_folder = 'file://' . $host . '/';
         $this->access_path_root_folder = '\\\\' . $host . '\\';

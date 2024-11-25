@@ -5,6 +5,7 @@ namespace Orryv\Path;
 use Orryv\Path\Exceptions\UnknownIfFolderOrFileException;
 use Orryv\Path\Exceptions\AboveBaseFolderException;
 use Orryv\Path\Enums\PathType;
+use Orryv\Path\Enums\Encoder;
 use Orryv\Path\Models\AbsoluteReferencePathFormat;
 use Orryv\Path\Models\AbsoluteAccessURIFormat;
 use Orryv\Path\Models\AbsoluteAccessPathFormat;
@@ -12,6 +13,7 @@ use Orryv\Path\Models\AbsoluteAccessPathFormat;
 abstract class AbsolutePath
 {
     protected PathType $path_type;
+    protected Encoder $use_encoding = Encoder::NONE;
     protected string $ds; // For AccessPath directory separator
     protected bool $preserve_end_slash = false;
     protected string $scheme;
@@ -19,7 +21,7 @@ abstract class AbsolutePath
     protected ?array $folder_path = null; // path without the file (applied after asFolder() or asFile())
     protected ?array $host = null;
 
-    protected ?array $current_path = null;
+    // protected ?array $current_path = null;
     protected ?array $base_path = null;
 
     // protected ?string $file_name = null;
@@ -52,6 +54,7 @@ abstract class AbsolutePath
         return $this->ds;
     }
 
+    // @ TODO: Change this so it uses a ?string $last_slash instead.
     public function preserveEndSlash(bool $preserve = true): self 
     {
         $clone = clone $this;
@@ -61,12 +64,50 @@ abstract class AbsolutePath
         $clone->access_path_root_folder = rtrim($clone->access_path_root_folder, $clone->ds) . $clone->ds;
         $clone->reference_path_root_folder = rtrim($clone->reference_path_root_folder, '/') . '/';
         $clone->path[] = '';
-        $clone->current_path[] = '';
+        // $clone->current_path[] = '';
         if($clone->folder_path !== null) {
             $clone->folder_path[] = '';
         }
 
         return $clone;
+    }
+
+    // @TODO: how are we formatting this so it can be used with different formats?
+    public function getNthFolder(int $nth, string $formatClassName = AbsoluteReferencePathFormat::class): ?string 
+    {
+        if($this->path_type === PathType::UNKNOWN) {
+            throw new UnknownIfFolderOrFileException('Unknown if the path is a folder or a file, call asFolder() or asFile() first.');
+        }
+
+        return $this->path[$nth] ?? null;
+    }
+    // @TODO: how are we formatting this so it can be used with different formats?
+    public function getFirstFolder(string $formatClassName = AbsoluteReferencePathFormat::class): ?string 
+    {
+        if($this->path_type === PathType::UNKNOWN) {
+            throw new UnknownIfFolderOrFileException('Unknown if the path is a folder or a file, call asFolder() or asFile() first.');
+        }
+
+        return $this->path[0] ?? null;
+    }
+
+    // @TODO: how are we formatting this so it can be used with different formats?
+    public function getLastFolder(string $formatClassName = AbsoluteReferencePathFormat::class): ?string 
+    {
+        if($this->path_type === PathType::UNKNOWN) {
+            throw new UnknownIfFolderOrFileException('Unknown if the path is a folder or a file, call asFolder() or asFile() first.');
+        }
+
+        return $this->path[count($this->path) - 1] ?? null;
+    }
+
+    public function getFolderCount(): int 
+    {
+        if($this->path_type === PathType::UNKNOWN) {
+            throw new UnknownIfFolderOrFileException('Unknown if the path is a folder or a file, call asFolder() or asFile() first.');
+        }
+
+        return count($this->path);
     }
 
     public function getScheme(): string 
@@ -333,7 +374,7 @@ abstract class AbsolutePath
         }
         
         $clone->path = $current_path;
-        $clone->current_path = $current_path;
+        // $clone->current_path = $current_path;
 
         return $clone;
     }
