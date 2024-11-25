@@ -50,26 +50,6 @@ abstract class AbsoluteSystemPath extends AbsolutePath
         return $clone;
     }
 
-    public function asFolder(): self
-    {
-        $clone = clone $this;
-
-        $clone->path_type = PathType::FOLDER;
-
-        $clone->access_uri_file_name = null;
-        $clone->access_uri_file_extension = null;
-
-        $clone->access_path_file_name = null;
-        $clone->access_path_file_extension = null;
-
-        $clone->reference_path_file_name = null;
-        $clone->reference_path_file_extension = null;
-
-        $clone->folder_path = $clone->path;
-
-        return $clone;
-    }
-
     public function getOSFamily(): OSFamily
     {
         return $this->os_family;

@@ -156,7 +156,7 @@ abstract class AbsolutePath
     }
 
     abstract public function asFile(): self;
-    abstract public function asFolder(): self;
+    // abstract public function asFolder(): self;
 
     ##########################
     ###### REFERENCE PATH ####
@@ -224,6 +224,29 @@ abstract class AbsolutePath
     ########################
     ###### NAVIGATION ######
     ########################
+
+    /**
+     * Tell the class we're dealing with a file. (immutable)
+     */
+    public function asFolder(): self
+    {
+        $clone = clone $this;
+
+        $clone->path_type = PathType::FOLDER;
+
+        $clone->access_uri_file_name = null;
+        $clone->access_uri_file_extension = null;
+
+        $clone->access_path_file_name = null;
+        $clone->access_path_file_extension = null;
+
+        $clone->reference_path_file_name = null;
+        $clone->reference_path_file_extension = null;
+
+        $clone->folder_path = $clone->path;
+
+        return $clone;
+    }
 
     /**
      * Change the current folder with ordinary cd commands.

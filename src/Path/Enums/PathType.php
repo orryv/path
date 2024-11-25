@@ -4,9 +4,9 @@ namespace Orryv\Path\Enums;
 
 enum PathType: string
 {
-    case FOLDER = 'folder';
-    case FILE = 'file';
-    case UNKNOWN = 'unknown';
+    case FOLDER = 'Folder';
+    case FILE = 'File';
+    case UNKNOWN = 'Unknown';
 
     public function toString(): string
     {

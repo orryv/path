@@ -4,8 +4,8 @@ namespace Orryv\Path\Enums;
 
 enum OSFamily: string
 {
-    case WINDOWS = 'windows';
-    case UNIX = 'unix';
+    case WINDOWS = 'Windows';
+    case UNIX = 'Unix';
 
     public function toString(): string
     {
