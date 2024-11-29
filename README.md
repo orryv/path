@@ -4,6 +4,7 @@
  # TODO
  - [ ] Implement preserveEndSlash() properly.
  - [ ] Implement getNthFolder(), getFirstFolder(), getLastFolder() and find a way to deal with what it returns (accessPath, referencePath, accessURI)
+ - [ ] Other URIs probably parse ? and # when they shouldn't... (so it would be nice to have one method to parse them all, where we only pass the path (and $parseQuery, $parseFragment, and encoding) and it returns the parts)
 
 # Usage
 
