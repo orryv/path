@@ -6,7 +6,7 @@
 IMPORTANT: all methods are immutable, they return a new instance of the object. (except for get methods, duh.)
 
 ```php
-use Path\Path;
+use Orryv\Path\Path;
 
 $path = Path::create('C:/path/to/file.txt');
 // OR
@@ -31,7 +31,7 @@ $path = $path->cd('path/to/another/folder');
 ### Usage with html
 
 ```php
-use Path\Path;
+use Orryv\Path\Path;
 // when you find a href on a page
 $url = Path::create('https://website.com/path/to/page?query=string#fragment') // current page
     ->asFile() // set current page as a file
@@ -44,7 +44,7 @@ $url = Path::create('https://website.com/path/to/page?query=string#fragment') //
 A base path means cd can't go above it.
 
 ```php
-use Path\Path;
+use Orryv\Path\Path;
 
 $base_folder = Path::create('C:/path/to/folder')
     ->asFolder();
@@ -54,6 +54,25 @@ $path = Path::create('C:/path/to/folder/file.txt')
     ->setBasePath($base_folder)
     ->cd('..'); // will throw an error
 ```
+
+### Encoding
+Standard system paths are rawurlencoded for AccessURI. URIs (http://, ftp://, etc) are not encoded. But you can change it if you want.
+
+```php
+use Orryv\Path\Path;
+use Orryv\Path\Enums\Encoder;
+
+// This will only affect AccessURI
+$path = Path::create('C:/path/to/file.txt')
+    ->asFile()
+    ->setEncoding(Encoder::RAWURLENCODE); // URLENCODE or RAWURLENCODE
+
+// For URIs (except file://) it will only affect ReferencePath
+$path = Path::create('https://website.com/path/to/page?query=string#fragment')
+    ->asFile()
+    ->setEncoding(Encoder::URLENCODE); // URLENCODE or RAWURLENCODE
+```
+
 
 # Glossary
 
