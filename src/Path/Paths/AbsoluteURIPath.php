@@ -65,7 +65,9 @@ class AbsoluteURIPath extends AUP
         }
 
         if($this->use_encoding !== Encoder::NONE){
-            $url .= '/' . implode('/', array_map($this->use_encoding->toString(), $this->path));
+            $decoding = $this->use_encoding->toString() === Encoder::RAWURLENCODE ? 'rawurldecode' : 'urldecode';
+
+            $url .= '/' . implode('/', array_map($decoding, $this->path));
         } else {
             $url .= '/' . implode('/', $this->path);
         }

@@ -116,10 +116,10 @@ class HTTPPathTest extends PathsBase
 
     public function testEncoding()
     {
-        $uri = Path::create(new AbsoluteReferencePathFormat('http://www.text.com/path/to/file+sometign%.txt?query=1&novalue#fragment'))
+        $uri = Path::create(new AbsoluteReferencePathFormat('http://www.text.com/path/to/file%2Bsometign%25.txt?query=1&novalue#fragment'))
             ->withEncoding(Encoder::URLENCODE);
 
-        $expects = 'http://www.text.com/path/to/file%2Bsometign%25.txt?query=1&novalue#fragment';
+        $expects = 'http://www.text.com/path/to/file+sometign%.txt?query=1&novalue#fragment';
         $this->assertEquals($expects, (string) $uri->getReferencePath());
     }
 

@@ -1,6 +1,10 @@
 # Path
  Handles URI, URL, and file/folder paths. There are some @TODOs in the code, but it's working fine.
 
+ # TODO
+ - [ ] Implement preserveEndSlash() properly.
+ - [ ] Implement getNthFolder(), getFirstFolder(), getLastFolder() and find a way to deal with what it returns (accessPath, referencePath, accessURI)
+
 # Usage
 
 IMPORTANT: all methods are immutable, they return a new instance of the object. (except for get methods, duh.)
@@ -56,21 +60,21 @@ $path = Path::create('C:/path/to/folder/file.txt')
 ```
 
 ### Encoding
-Standard system paths are rawurlencoded for AccessURI. URIs (http://, ftp://, etc) are not encoded. But you can change it if you want.
+In default, system paths are rawurlencoded for AccessURI. URIs (http://, ftp://, etc) are not DECODED. But you can change it if you want.
 
 ```php
 use Orryv\Path\Path;
 use Orryv\Path\Enums\Encoder;
 
 // This will only affect AccessURI
-$path = Path::create('C:/path/to/file.txt')
+$path = Path::create('C:/path/to/file#.txt')
     ->asFile()
-    ->setEncoding(Encoder::RAWURLENCODE); // URLENCODE or RAWURLENCODE
+    ->setEncoding(Encoder::RAWURLENCODE); // this will ENCODE the # when getting AccessURI()
 
 // For URIs (except file://) it will only affect ReferencePath
 $path = Path::create('https://website.com/path/to/page?query=string#fragment')
     ->asFile()
-    ->setEncoding(Encoder::URLENCODE); // URLENCODE or RAWURLENCODE
+    ->setEncoding(Encoder::URLENCODE); // this will DECODE the # when getting ReferencePath()
 ```
 
 
