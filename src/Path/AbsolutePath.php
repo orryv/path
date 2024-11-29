@@ -13,16 +13,20 @@ use Orryv\Path\Models\AbsoluteAccessPathFormat;
 abstract class AbsolutePath
 {
     protected PathType $path_type;
-    protected Encoder $use_encoding = Encoder::NONE;
+    protected Encoder $use_encoding;
     protected string $ds; // For AccessPath directory separator
     protected bool $preserve_end_slash = false;
     protected string $scheme;
-    protected array $path;
-    protected ?array $folder_path = null; // path without the file (applied after asFolder() or asFile())
     protected ?array $host = null;
 
+
+    protected array $path; // Not decoded
+    protected ?array $folder_path = null; /// Not decoded. path without the file (applied after asFolder() or asFile())
+    protected ?array $base_path = null; // Not decoded
+    
+
     // protected ?array $current_path = null;
-    protected ?array $base_path = null;
+    
 
     // protected ?string $file_name = null;
     // protected ?string $file_extension = null;
@@ -73,32 +77,36 @@ abstract class AbsolutePath
     }
 
     // @TODO: how are we formatting this so it can be used with different formats?
+    // Currently it returns a reference path...
     public function getNthFolder(int $nth, string $formatClassName = AbsoluteReferencePathFormat::class): ?string 
     {
         if($this->path_type === PathType::UNKNOWN) {
             throw new UnknownIfFolderOrFileException('Unknown if the path is a folder or a file, call asFolder() or asFile() first.');
         }
 
-        return $this->path[$nth] ?? null;
+        return $this->folder_path[$nth] ?? null;
     }
+
     // @TODO: how are we formatting this so it can be used with different formats?
+    // Currently it returns a reference path...
     public function getFirstFolder(string $formatClassName = AbsoluteReferencePathFormat::class): ?string 
     {
         if($this->path_type === PathType::UNKNOWN) {
             throw new UnknownIfFolderOrFileException('Unknown if the path is a folder or a file, call asFolder() or asFile() first.');
         }
 
-        return $this->path[0] ?? null;
+        return $this->folder_path[0] ?? null;
     }
 
     // @TODO: how are we formatting this so it can be used with different formats?
+    // Currently it returns a reference path...
     public function getLastFolder(string $formatClassName = AbsoluteReferencePathFormat::class): ?string 
     {
         if($this->path_type === PathType::UNKNOWN) {
             throw new UnknownIfFolderOrFileException('Unknown if the path is a folder or a file, call asFolder() or asFile() first.');
         }
 
-        return $this->path[count($this->path) - 1] ?? null;
+        return $this->folder_path[count($this->folder_path) - 1] ?? null;
     }
 
     public function getFolderCount(): int 
@@ -107,7 +115,7 @@ abstract class AbsolutePath
             throw new UnknownIfFolderOrFileException('Unknown if the path is a folder or a file, call asFolder() or asFile() first.');
         }
 
-        return count($this->path);
+        return count($this->folder_path);
     }
 
     public function getScheme(): string 
@@ -293,7 +301,6 @@ abstract class AbsolutePath
      * Change the current folder with ordinary cd commands.
      * 
      * @param string|array $commands
-     * @param AbsolutePath|null $base_folder If provided, you can't go above this folder.
      */
     public function cd(string|array $commands): self 
     {

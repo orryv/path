@@ -23,7 +23,10 @@ class AbsoluteWindowsNetworkPath extends AbsoluteSystemPath
         $this->path_type = PathType::UNKNOWN;
         $this->ds = '\\';
         $this->scheme = 'FILE';
+        // $tmp_path = (substr($path, 0, 7) === 'file://') ? substr($path, strpos($path, '/', 7)) : $path;
+        // echo 'TMP_PATH: ' . $tmp_path . PHP_EOL;
         $this->path = Utils::splitPathAndTrimSlashes($path, $this->preserve_end_slash);
+        // print_r($this->path);
         // $this->current_path = $this->path;
         $this->host = explode('.', $host);
         $this->access_uri_root_folder = 'file://' . $host . '/';

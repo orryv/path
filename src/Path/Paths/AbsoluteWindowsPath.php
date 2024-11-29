@@ -22,7 +22,8 @@ class AbsoluteWindowsPath extends AbsoluteSystemPath
         $this->path_type = PathType::UNKNOWN;
         $this->ds = '\\';
         $this->scheme = 'FILE';
-        $this->path = Utils::splitPathAndTrimSlashes($path, $this->preserve_end_slash);
+        $tmp_path = substr($path, 3);
+        $this->path = Utils::splitPathAndTrimSlashes($tmp_path, $this->preserve_end_slash);
         // $this->current_path = $this->path;
         $this->host = null;
         $this->access_uri_root_folder = 'file:///' . $this->drive . ':/';

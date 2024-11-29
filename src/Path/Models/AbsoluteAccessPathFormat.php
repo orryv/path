@@ -14,6 +14,10 @@ class AbsoluteAccessPathFormat
             !preg_match("/^[a-zA-Z]:[\\\\]/", $path) // Windows drive path
             && !preg_match("/^[\\\\]{2}[a-zA-Z0-9]+/", $path) // Windows network path
             && substr($path, 0, 1) !== "/" // Unix
+            // http/https
+            && !preg_match("/^https?:\/\//", $path)
+            // generic URI
+            && !preg_match("/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//", $path)
         ){
             throw new InvalidAbsoluteAccessPathFormatException("Invalid (absolute) AccessPath: $path");
         }

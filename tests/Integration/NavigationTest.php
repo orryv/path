@@ -1,5 +1,7 @@
 <?php
 
+namespace Tests\Integration;
+
 use PHPUnit\Framework\TestCase;
 use Orryv\Path\Path;
 use Orryv\Path\Exceptions\UnknownIfFolderOrFileException;

@@ -1,7 +1,59 @@
 # Path
- Handles URI, URL, and file/folder paths
+ Handles URI, URL, and file/folder paths. There are some @TODOs in the code, but it's working fine.
 
- # TODOabb
+# Usage
+
+IMPORTANT: all methods are immutable, they return a new instance of the object. (except for get methods, duh.)
+
+```php
+use Path\Path;
+
+$path = Path::create('C:/path/to/file.txt');
+// OR
+$path = Path::create('file:///C:/path/to/file.txt');
+// OR
+$path = Path::create('https://website.com/path/to/page?query=string#fragment');
+// OR (any URI)
+$path = Path::create('ftp://path/to/file.txt');
+
+// Return the path
+$path->getReferencePath();
+$path->getAccessPath();
+$path->getAccessURI();
+
+// Navigation
+// Make sure to set it as file or as folder first:
+$path = $path->asFile();
+$path = $path->asFolder();
+$path = $path->cd('path/to/another/folder');
+```
+
+### Usage with html
+
+```php
+use Path\Path;
+// when you find a href on a page
+$url = Path::create('https://website.com/path/to/page?query=string#fragment') // current page
+    ->asFile() // set current page as a file
+    ->rmQuery() // remove query from the url
+    ->rmFragment() // remove fragment from the url
+    ->cd('path/to/another/file.jpg'); // href
+```
+
+### Usage with a base path
+A base path means cd can't go above it.
+
+```php
+use Path\Path;
+
+$base_folder = Path::create('C:/path/to/folder')
+    ->asFolder();
+
+$path = Path::create('C:/path/to/folder/file.txt')
+    ->asFile()
+    ->setBasePath($base_folder)
+    ->cd('..'); // will throw an error
+```
 
 # Glossary
 
@@ -37,7 +89,7 @@
     - `https://website.com/path/to/page?query=string#fragment` => `https://website.com/`
     - `ftp://path/to/file.txt` => `ftp://` OR `ftp://user@host/`
 
-- **Base Folder**: The folder used to indicate where `cd()` can't go above.
+- **Base Path/Folder**: The folder used to indicate where `cd()` can't go above.
 
 Note: While you could asume that relative paths are relative to the Base Folder, IT IS NOT. Relative paths are relative to `$path`. The Base Folder is only used to set a hard limit to the `cd()` method.
 
@@ -46,5 +98,5 @@ Note: While you could asume that relative paths are relative to the Base Folder,
 Run tests
 
 ```bash
-php ./vendor/bin/phpunit tests/Integration/AbsoluteURI/FileUnixTest.php
+php ./vendor/bin/phpunit tests/Integration
 ```

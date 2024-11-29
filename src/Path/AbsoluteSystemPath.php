@@ -6,6 +6,7 @@ use Orryv\Path\Exceptions\FileNotFoundException;
 use Orryv\Path\AbsolutePath;
 use Orryv\Path\Enums\PathType;
 use Orryv\Path\Enums\OSFamily;
+use Orryv\Path\Enums\Encoder;
 use Orryv\Path\Enums\SystemPathLocationCategory;
 use Orryv\Path\Models\AbsoluteReferencePathFormat;
 use Orryv\Path\Models\AbsoluteAccessURIFormat;
@@ -15,6 +16,7 @@ abstract class AbsoluteSystemPath extends AbsolutePath
 {
     protected OSFamily $os_family;
     protected SystemPathLocationCategory $location_category;
+    protected Encoder $use_encoding = Encoder::RAWURLENCODE;
 
     public function asFile(): self
     {
@@ -67,7 +69,11 @@ abstract class AbsoluteSystemPath extends AbsolutePath
 
     public function getAccessURI(): AbsoluteAccessURIFormat
     {
-        $path = implode('/', array_map('rawurldecode', $this->path));
+        if($this->use_encoding !== Encoder::NONE){
+            $path = implode('/', array_map($this->use_encoding->toString(), $this->path));
+        } else {
+            $path = implode('/', $this->path);
+        }
 
         return new AbsoluteAccessURIFormat($this->access_uri_root_folder . $path);
     }

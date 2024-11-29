@@ -18,7 +18,7 @@ class Utils
             array_shift($path);
         }
 
-        if(!$preserve_last_slash && $path[count($path) - 1] === '') {
+        if(!$preserve_last_slash && isset($path[count($path) - 1]) && $path[count($path) - 1] === '') {
             array_pop($path);
         }
 

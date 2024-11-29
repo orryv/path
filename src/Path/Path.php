@@ -3,7 +3,7 @@
 namespace Orryv\Path;
 
 use Orryv\Path\AbsolutePath;
-// use Orryv\Path\Web\AbsoluteWebURI;
+use Orryv\Path\Paths\AbsoluteURIPath;
 // use Orryv\Path\Generic\AbsoluteGenericURI;
 use Orryv\Path\Paths\AbsoluteUnixPath;
 use Orryv\Path\Paths\AbsoluteWindowsPath;
@@ -31,7 +31,7 @@ class Path {
 
         
         return match(true) {
-            // self::isWebURI($path) => new AbsoluteWebURI($path),
+            self::isHTTPURI($path) || self::isGenericURI($path) => new AbsoluteURIPath($path),
             // self::isGenericURI($path) => new AbsoluteGenericURI($path),
             self::isWindowsPath($path) => new AbsoluteWindowsPath($path),
             self::isWindowsNetworkPath($path) => new AbsoluteWindowsNetworkPath($path),
@@ -82,10 +82,6 @@ class Path {
         return $path;
     }
 
-    
-
-    
-
     /**
      * Check if the path is a HTTP/HTTPS URI.
      * 
@@ -95,7 +91,7 @@ class Path {
      * 
      * @return bool
      */
-    public static function isWebURI(AbsoluteReferencePathFormat $path): bool 
+    public static function isHTTPURI(AbsoluteReferencePathFormat $path): bool 
     {
         $regex = '/^https?:\/\//';
         
@@ -117,7 +113,7 @@ class Path {
         $regex = '/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//';
 
         return preg_match($regex, $path) === 1
-            && !self::isWebURI($path);
+            && !self::isHTTPURI($path);
     }
 
     /**

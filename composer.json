@@ -4,7 +4,8 @@
     "type": "library",
     "autoload": {
         "psr-4": {
-            "Orryv\\": "src/"
+            "Orryv\\": "src/",
+            "Tests\\Integration\\": "tests/Integration/"
         }
     },
     "authors": [
