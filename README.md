@@ -2,6 +2,7 @@
  Handles URI, URL, and file/folder paths. There are some @TODOs in the code, but it's working fine.
 
  # TODO
+ - [ ] Implement asDot() which resolves to asFile() or asFolder() depending if there is a dot in the last part of the path. helpful for html hrefs.
  - [ ] Implement preserveEndSlash() properly.
  - [ ] Implement getNthFolder(), getFirstFolder(), getLastFolder() and find a way to deal with what it returns (accessPath, referencePath, accessURI)
  - [ ] Other URIs probably parse ? and # when they shouldn't... (so it would be nice to have one method to parse them all, where we only pass the path (and $parseQuery, $parseFragment, and encoding) and it returns the parts)
