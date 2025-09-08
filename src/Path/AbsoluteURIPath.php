@@ -269,7 +269,7 @@ abstract class AbsoluteURIPath extends AbsolutePath
         // at this point we have: subdomain.example.com:8443
         if(strpos($host, ':') !== false){
             $host = explode(':', $host);
-            $this->port = $host[1];
+            $this->port = (int)$host[1];
             $host = $host[0];
         }
 
