@@ -1,6 +1,6 @@
 <?php
 
-namespace Orryv\Path;
+namespace Orryv;
 
 use Orryv\Path\AbsolutePath;
 use Orryv\Path\Paths\AbsoluteURIPath;

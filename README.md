@@ -12,7 +12,7 @@
 IMPORTANT: all methods are immutable, they return a new instance of the object. (except for get methods, duh.)
 
 ```php
-use Orryv\Path\Path;
+use Orryv\Path
 
 $path = Path::create('C:/path/to/file.txt');
 // OR
@@ -37,7 +37,7 @@ $path = $path->cd('path/to/another/folder');
 ### Usage with html
 
 ```php
-use Orryv\Path\Path;
+use Orryv\Path
 // when you find a href on a page
 $url = Path::create('https://website.com/path/to/page?query=string#fragment') // current page
     ->asFile() // set current page as a file
@@ -50,7 +50,7 @@ $url = Path::create('https://website.com/path/to/page?query=string#fragment') //
 A base path means cd can't go above it.
 
 ```php
-use Orryv\Path\Path;
+use Orryv\Path
 
 $base_folder = Path::create('C:/path/to/folder')
     ->asFolder();
@@ -65,7 +65,7 @@ $path = Path::create('C:/path/to/folder/file.txt')
 In default, system paths are rawurlencoded for AccessURI. URIs (http://, ftp://, etc) are not DECODED. But you can change it if you want.
 
 ```php
-use Orryv\Path\Path;
+use Orryv\Path
 use Orryv\Path\Enums\Encoder;
 
 // This will only affect AccessURI
