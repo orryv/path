@@ -3,7 +3,7 @@
 namespace Tests\Integration;
 
 use PHPUnit\Framework\TestCase;
-use Orryv\Path\Path;
+use Orryv\Path;
 use Orryv\Path\Exceptions\UnknownIfFolderOrFileException;
 use Orryv\Path\Exceptions\AboveBaseFolderException;
 use Orryv\Path\Paths\AbsoluteUnixPath;
