@@ -1,11 +1,65 @@
 # Path
  Handles URI, URL, and file/folder paths. There are some @TODOs in the code, but it's working fine.
 
- # TODO
- - [ ] Implement asDot() which resolves to asFile() or asFolder() depending if there is a dot in the last part of the path. helpful for html hrefs.
- - [ ] Implement preserveEndSlash() properly.
- - [ ] Implement getNthFolder(), getFirstFolder(), getLastFolder() and find a way to deal with what it returns (accessPath, referencePath, accessURI)
- - [ ] Other URIs probably parse ? and # when they shouldn't... (so it would be nice to have one method to parse them all, where we only pass the path (and $parseQuery, $parseFragment, and encoding) and it returns the parts)
+## TODO
+- [ ] Implement asDot() which resolves to asFile() or asFolder() depending if there is a dot in the last part of the path. helpful for html hrefs.
+- [ ] Implement preserveEndSlash() properly.
+- [ ] Implement getNthFolder(), getFirstFolder(), getLastFolder() and find a way to deal with what it returns (accessPath, referencePath, accessURI)
+- [ ] Other URIs probably parse ? and # when they shouldn't... (so it would be nice to have one method to parse them all, where we only pass the path (and $parseQuery, $parseFragment, and encoding) and it returns the parts)
+- [ ] Fix `AbsoluteURIPath::parseData()` so that usernames and passwords are extracted before the host string is overwritten.
+- [ ] Ensure `withHost()` and `withHostString()` recompute the root folder for URI paths so `getReferencePath()` reflects host changes.
+- [ ] Relax `AbsoluteAccessURIFormat` validation so schemes containing digits, plus signs or dots remain valid.
+- [ ] Add regression tests that cover credential parsing, host mutations, and other URI edge cases.
+- [ ] Add dedicated tests for the folder helper accessors (`getNthFolder()`, `getFirstFolder()`, `getLastFolder()`, `getFolderCount()`).
+
+## Improvements
+- Prefer a single `guessPathType()`/`determinePathType()` helper that returns the existing `PathType` enum over adding separate `isFile()`, `isFolder()`, and `isDot()` booleans; it would leverage the tracked `$path_type` state and avoid inconsistent heuristics.
+- Consider injecting a pluggable segment classifier that inspects the normalized reference path array (for example via `Utils::splitPathAndTrimSlashes()`) to decide whether a final token represents a file, folder, or dot entry, making custom rules easier to maintain.
+- Introduce a small strategy or service that encapsulates root-folder recomposition after changes to scheme, host, credentials, or port so all mutators stay in sync.
+- Split encoding responsibilities into dedicated helpers so URI schemes and filesystem paths can opt into the right encoder without keeping TODO comments inside core methods.
+
+## v2.1
+- Support relative path inputs by introducing a dedicated `RelativePath` format or extending `AbsoluteReferencePathFormat` with a base-path context instead of throwing an exception for non-absolute strings.
+- Expand scheme handling to cover providers such as `s3://` or `git+ssh://`, including validation updates and encoding presets for less common protocols.
+- Provide chainable helpers that wrap host, credential, and port mutations to keep derived access/reference outputs synchronized automatically.
+- Offer richer query manipulation utilities (e.g., typed key/value objects or merge helpers) on top of the existing array-based query handling to simplify complex URI modifications.
+
+## Objects
+### Path factory
+`Orryv\Path::create()` normalizes a string (including validation) into an `AbsoluteReferencePathFormat` and returns the correct concrete path implementation (URI, Unix, Windows drive, or Windows network) based on the detected scheme or prefix. Use it whenever you start from an unknown absolute path and want an immutable object with navigation helpers.
+
+### AbsolutePath
+`AbsolutePath` is the base class for all path types. It tracks the current `PathType`, directory separator, scheme, host, and normalized path tokens while exposing immutable helpers such as `asFile()`, `asFolder()`, `cd()`, `setBasePath()`, and the access/reference getters. Create paths through the factory and call `asFile()`/`asFolder()` to set intent before navigating or reading folder metadata.
+
+```php
+$path = Path::create('C:/projects/demo/file.txt')
+    ->asFile();
+
+$path->getAccessURI();      // file:///C:/projects/demo/file.txt
+$path->getReferencePath();  // C:/projects/demo/file.txt
+```
+
+### AbsoluteSystemPath
+`AbsoluteSystemPath` specializes `AbsolutePath` for filesystem locations. It records the operating system family and location category (local vs. network), splits filenames into name/extension, and provides encoded access-URI/access-path outputs using the correct directory separator. It powers both Unix (`AbsoluteUnixPath`) and Windows variants (`AbsoluteWindowsPath`, `AbsoluteWindowsNetworkPath`).
+
+### AbsoluteURIPath
+`AbsoluteURIPath` adds URI-specific behavior: it parses usernames, passwords, ports, query strings, and fragments; offers immutable mutators (`withUsername()`, `withPassword()`, `withQuery()`, `rmQuery()`, `withFragment()`, etc.); and rebuilds reference/access strings with the right encoding strategy. Use it for HTTP(S), FTP/SFTP, and other scheme-based resources where query manipulation or credential management matters.
+
+```php
+$url = Path::create('https://user:old@example.com/path/file.txt?debug=1')
+    ->asFile()
+    ->rmQuery()
+    ->withPassword('secret')
+    ->cd('images/logo.png');
+
+$url->getAccessURI();
+```
+
+### Format value objects
+`AbsoluteReferencePathFormat`, `AbsoluteAccessPathFormat`, and `AbsoluteAccessURIFormat` validate and encapsulate normalized strings for their respective contexts. They centralize parsing logic for different platforms/schemes and ensure only well-formed absolute paths flow through the rest of the API.
+
+### Enumerations
+The enums `PathType`, `Encoder`, `OSFamily`, and `SystemPathLocationCategory` describe key aspects of a path—whether it targets a file or folder, which encoding to apply, the operating-system family, and whether the location is local or networked. They keep method signatures expressive and make it easier to branch logic without magic strings.
 
 # Usage
 
