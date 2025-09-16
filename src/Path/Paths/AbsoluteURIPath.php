@@ -85,13 +85,15 @@ class AbsoluteURIPath extends AUP
 
     public function getAccessPath(): AbsoluteAccessPathFormat
     {
-        $url = substr($this->access_uri_root_folder, 0, -1);
+        $url = rtrim($this->access_uri_root_folder, '/');
 
-        if(empty($this->path)){
-            return new AbsoluteAccessPathFormat($url, $this->preserve_end_slash ? '/' : '');
+        if(!empty($this->path)){
+            $url .= '/' . implode('/', $this->path);
         }
 
-        $url .= '/' . implode('/', $this->path);
+        if($this->preserve_end_slash && $this->path_type !== PathType::FILE && !str_ends_with($url, '/')){
+            $url .= '/';
+        }
 
         if(!empty($this->query)){
             $url .= '?' . $this->getQueryString();
@@ -101,18 +103,20 @@ class AbsoluteURIPath extends AUP
             $url .= '#' . $this->fragment;
         }
 
-        return new AbsoluteAccessPathFormat($url, $this->preserve_end_slash ? '/' : '');
+        return new AbsoluteAccessPathFormat($url);
     }
 
     public function getAccessURI(): AbsoluteAccessURIFormat
     {
-        $url = substr($this->access_uri_root_folder, 0, -1);
+        $url = rtrim($this->access_uri_root_folder, '/');
 
-        if(empty($this->path)){
-            return new AbsoluteAccessURIFormat($url, $this->preserve_end_slash ? '/' : '');
+        if(!empty($this->path)){
+            $url .= '/' . implode('/', $this->path);
         }
 
-        $url .= '/' . implode('/', $this->path);
+        if($this->preserve_end_slash && $this->path_type !== PathType::FILE && !str_ends_with($url, '/')){
+            $url .= '/';
+        }
 
         if(!empty($this->query)){
             $url .= '?' . $this->getQueryString();
@@ -122,7 +126,7 @@ class AbsoluteURIPath extends AUP
             $url .= '#' . $this->fragment;
         }
 
-        return new AbsoluteAccessURIFormat($url, $this->preserve_end_slash ? '/' : '');
+        return new AbsoluteAccessURIFormat($url);
     }
 
     

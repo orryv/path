@@ -70,16 +70,28 @@ abstract class AbsoluteSystemPath extends AbsolutePath
     public function getAccessURI(): AbsoluteAccessURIFormat
     {
         if($this->use_encoding !== Encoder::NONE){
-            $path = implode('/', array_map($this->use_encoding->toString(), $this->path));
+            $segments = array_map($this->use_encoding->toString(), $this->path);
         } else {
-            $path = implode('/', $this->path);
+            $segments = $this->path;
         }
 
-        return new AbsoluteAccessURIFormat($this->access_uri_root_folder . $path);
+        $uri = $this->access_uri_root_folder . ($segments === [] ? '' : implode('/', $segments));
+
+        if($this->preserve_end_slash && $this->path_type !== PathType::FILE && !str_ends_with($uri, '/')) {
+            $uri .= '/';
+        }
+
+        return new AbsoluteAccessURIFormat($uri);
     }
 
     public function getAccessPath(): AbsoluteAccessPathFormat
     {
-        return new AbsoluteAccessPathFormat($this->access_path_root_folder . implode($this->ds, $this->path));
+        $path = $this->access_path_root_folder . ($this->path === [] ? '' : implode($this->ds, $this->path));
+
+        if($this->preserve_end_slash && $this->path_type !== PathType::FILE && !str_ends_with($path, $this->ds)) {
+            $path .= $this->ds;
+        }
+
+        return new AbsoluteAccessPathFormat($path);
     }
 }
