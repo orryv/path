@@ -2,15 +2,17 @@
  Handles URI, URL, and file/folder paths. There are some @TODOs in the code, but it's working fine.
 
 ## TODO
-- [ ] Implement asDot() which resolves to asFile() or asFolder() depending if there is a dot in the last part of the path (after last / but before ? and #). helpful for html hrefs.
-- [ ] Implement preserveEndSlash() properly.
-- [ ] Implement getNthFolder(), getFirstFolder(), getLastFolder() and find a way to deal with what it returns (accessPath, referencePath, accessURI)
+- [x] Implement asDot() which resolves to asFile() or asFolder() depending if there is a dot in the last part of the path (after last / but before ? and #). helpful for html hrefs.
+- [x] Implement preserveEndSlash() properly.
+- [x] Implement getNthFolder(), getFirstFolder(), getLastFolder() and find a way to deal with what it returns (accessPath, referencePath, accessURI)
 - [ ] Other URIs probably parse ? and # when they shouldn't... (so it would be nice to have one method to parse them all, where we only pass the path (and $parseQuery, $parseFragment, and encoding) and it returns the parts)
 - [ ] Fix `AbsoluteURIPath::parseData()` so that usernames and passwords are extracted before the host string is overwritten.
 - [ ] Ensure `withHost()` and `withHostString()` recompute the root folder for URI paths so `getReferencePath()` reflects host changes.
 - [ ] Relax `AbsoluteAccessURIFormat` validation so schemes containing digits, plus signs or dots remain valid.
 - [ ] Add regression tests that cover credential parsing, host mutations, and other URI edge cases.
 - [ ] Add dedicated tests for the folder helper accessors (`getNthFolder()`, `getFirstFolder()`, `getLastFolder()`, `getFolderCount()`).
+- [ ] Check if we use monolog? if not remove it from composer.json
+- [ ] add script to composer.json to run phpunit tests: "test": "php ./vendor/bin/phpunit", test:unit and test:integration
 
 ## Improvements
 - Prefer a single `guessPathType()`/`determinePathType()` helper that returns the existing `PathType` enum over adding separate `isFile()`, `isFolder()`, and `isDot()` booleans; it would leverage the tracked `$path_type` state and avoid inconsistent heuristics.
