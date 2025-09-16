@@ -16,6 +16,7 @@
 - [ ] add docblock everywhere
 - [ ] make sure all relevant methods are included in readme and vice versa
 - [ ] make sure readme is up to date and has no typos and is easy to read and understand and is comprehensive.
+- [ ] Add to every assertion in every test a detailed message, so we know what failed.
 
 ## Improvements
 - Prefer a single `guessPathType()`/`determinePathType()` helper that returns the existing `PathType` enum over adding separate `isFile()`, `isFolder()`, and `isDot()` booleans; it would leverage the tracked `$path_type` state and avoid inconsistent heuristics.
