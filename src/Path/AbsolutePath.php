@@ -58,55 +58,86 @@ abstract class AbsolutePath
         return $this->ds;
     }
 
-    // @ TODO: Change this so it uses a ?string $last_slash instead.
-    public function preserveEndSlash(bool $preserve = true): self 
+    public function preserveEndSlash(bool $preserve = true): self
     {
         $clone = clone $this;
 
-        $clone->preserve_end_slash = true;
-        $clone->access_uri_root_folder = rtrim($clone->access_uri_root_folder, '/') . '/';
-        $clone->access_path_root_folder = rtrim($clone->access_path_root_folder, $clone->ds) . $clone->ds;
-        $clone->reference_path_root_folder = rtrim($clone->reference_path_root_folder, '/') . '/';
-        $clone->path[] = '';
-        // $clone->current_path[] = '';
+        $clone->preserve_end_slash = $preserve;
+        if(!str_ends_with($clone->access_uri_root_folder, '/')) {
+            $clone->access_uri_root_folder .= '/';
+        }
+
+        if(!str_ends_with($clone->access_path_root_folder, $clone->ds)) {
+            $clone->access_path_root_folder .= $clone->ds;
+        }
+
+        if(!str_ends_with($clone->reference_path_root_folder, '/')) {
+            $clone->reference_path_root_folder .= '/';
+        }
+
+        $clone->path = $clone->trimTrailingEmptySegments($clone->path);
+
         if($clone->folder_path !== null) {
-            $clone->folder_path[] = '';
+            $clone->folder_path = $clone->trimTrailingEmptySegments($clone->folder_path);
         }
 
         return $clone;
     }
 
-    // @TODO: how are we formatting this so it can be used with different formats?
-    // Currently it returns a reference path...
-    public function getNthFolder(int $nth, string $formatClassName = AbsoluteReferencePathFormat::class): ?string 
+    public function asDot(): self
     {
-        if($this->path_type === PathType::UNKNOWN) {
-            throw new UnknownIfFolderOrFileException('Unknown if the path is a folder or a file, call asFolder() or asFile() first.');
+        $lastSegment = $this->getLastPathSegment();
+
+        if($lastSegment === null) {
+            return $this->asFolder();
         }
 
-        return $this->folder_path[$nth] ?? null;
+        $lastSegment = $this->stripQueryAndFragment($lastSegment);
+
+        if($lastSegment === '' || $lastSegment === '.' || $lastSegment === '..') {
+            return $this->asFolder();
+        }
+
+        return str_contains($lastSegment, '.')
+            ? $this->asFile()
+            : $this->asFolder();
     }
 
-    // @TODO: how are we formatting this so it can be used with different formats?
-    // Currently it returns a reference path...
-    public function getFirstFolder(string $formatClassName = AbsoluteReferencePathFormat::class): ?string 
+    public function getNthFolder(int $nth, string $formatClassName = AbsoluteReferencePathFormat::class): AbsoluteReferencePathFormat|AbsoluteAccessPathFormat|AbsoluteAccessURIFormat|null
     {
         if($this->path_type === PathType::UNKNOWN) {
             throw new UnknownIfFolderOrFileException('Unknown if the path is a folder or a file, call asFolder() or asFile() first.');
         }
 
-        return $this->folder_path[0] ?? null;
+        $folders = $this->getSanitizedFolderPath();
+
+        if($nth < 0 || $nth >= count($folders)) {
+            return null;
+        }
+
+        $segments = array_slice($folders, 0, $nth + 1);
+
+        return $this->buildFolderFormat($segments, $formatClassName);
     }
 
-    // @TODO: how are we formatting this so it can be used with different formats?
-    // Currently it returns a reference path...
-    public function getLastFolder(string $formatClassName = AbsoluteReferencePathFormat::class): ?string 
+    public function getFirstFolder(string $formatClassName = AbsoluteReferencePathFormat::class): AbsoluteReferencePathFormat|AbsoluteAccessPathFormat|AbsoluteAccessURIFormat|null
+    {
+        return $this->getNthFolder(0, $formatClassName);
+    }
+
+    public function getLastFolder(string $formatClassName = AbsoluteReferencePathFormat::class): AbsoluteReferencePathFormat|AbsoluteAccessPathFormat|AbsoluteAccessURIFormat|null
     {
         if($this->path_type === PathType::UNKNOWN) {
             throw new UnknownIfFolderOrFileException('Unknown if the path is a folder or a file, call asFolder() or asFile() first.');
         }
 
-        return $this->folder_path[count($this->folder_path) - 1] ?? null;
+        $folders = $this->getSanitizedFolderPath();
+
+        if(empty($folders)) {
+            return null;
+        }
+
+        return $this->buildFolderFormat($folders, $formatClassName);
     }
 
     public function getFolderCount(): int 
@@ -115,7 +146,7 @@ abstract class AbsolutePath
             throw new UnknownIfFolderOrFileException('Unknown if the path is a folder or a file, call asFolder() or asFile() first.');
         }
 
-        return count($this->folder_path);
+        return count($this->getSanitizedFolderPath());
     }
 
     public function getScheme(): string 
@@ -152,7 +183,7 @@ abstract class AbsolutePath
             throw new UnknownIfFolderOrFileException('Unknown if the path is a folder or a file, call asFolder() or asFile() first.');
         }
 
-        return $this->folder_path;
+        return $this->getSanitizedFolderPath();
     }
 
     /**
@@ -334,6 +365,7 @@ abstract class AbsolutePath
                 if($cmds[count($cmds) - 1] === '') {
                     array_pop($cmds);
                 }
+
             }
 
             foreach ($cmds as $cmd) {
@@ -385,4 +417,93 @@ abstract class AbsolutePath
 
         return $clone;
     }
+
+    private function getSanitizedFolderPath(): array
+    {
+        if($this->folder_path === null) {
+            return [];
+        }
+
+        return $this->trimTrailingEmptySegments($this->folder_path);
+    }
+
+    private function trimTrailingEmptySegments(array $segments): array
+    {
+        while (($lastKey = array_key_last($segments)) !== null && $segments[$lastKey] === '') {
+            array_pop($segments);
+        }
+
+        return array_values($segments);
+    }
+
+    private function buildFolderFormat(array $segments, string $formatClassName): AbsoluteReferencePathFormat|AbsoluteAccessPathFormat|AbsoluteAccessURIFormat
+    {
+        $path = $this->composeFolderPath($segments, $formatClassName);
+
+        if(is_a($formatClassName, AbsoluteReferencePathFormat::class, true)) {
+            /** @var class-string<AbsoluteReferencePathFormat> $formatClassName */
+            return new $formatClassName($path, $this->preserve_end_slash);
+        }
+
+        if(is_a($formatClassName, AbsoluteAccessPathFormat::class, true)) {
+            /** @var class-string<AbsoluteAccessPathFormat> $formatClassName */
+            if($this->preserve_end_slash && !str_ends_with($path, $this->ds)) {
+                $path .= $this->ds;
+            }
+
+            return new $formatClassName($path);
+        }
+
+        if(is_a($formatClassName, AbsoluteAccessURIFormat::class, true)) {
+            /** @var class-string<AbsoluteAccessURIFormat> $formatClassName */
+            if($this->preserve_end_slash && !str_ends_with($path, '/')) {
+                $path .= '/';
+            }
+
+            return new $formatClassName($path);
+        }
+
+        throw new \InvalidArgumentException(sprintf('Unsupported folder format class "%s".', $formatClassName));
+    }
+
+    private function composeFolderPath(array $segments, string $formatClassName): string
+    {
+        $root = match(true) {
+            is_a($formatClassName, AbsoluteAccessPathFormat::class, true) => $this->access_path_root_folder,
+            is_a($formatClassName, AbsoluteAccessURIFormat::class, true) => $this->access_uri_root_folder,
+            default => $this->reference_path_root_folder,
+        };
+
+        $separator = match(true) {
+            is_a($formatClassName, AbsoluteAccessPathFormat::class, true) => $this->ds,
+            default => '/',
+        };
+
+        $segments = $this->trimTrailingEmptySegments($segments);
+
+        return $root . ($segments === [] ? '' : implode($separator, $segments));
+    }
+
+    private function getLastPathSegment(): ?string
+    {
+        for($i = count($this->path) - 1; $i >= 0; $i--) {
+            if($this->path[$i] !== '') {
+                return $this->path[$i];
+            }
+        }
+
+        return null;
+    }
+
+    private function stripQueryAndFragment(string $segment): string
+    {
+        $cutPosition = strcspn($segment, '?#');
+
+        if($cutPosition < strlen($segment)) {
+            $segment = substr($segment, 0, $cutPosition);
+        }
+
+        return $segment;
+    }
+
 }
