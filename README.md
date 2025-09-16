@@ -13,6 +13,9 @@
 - [ ] Add dedicated tests for the folder helper accessors (`getNthFolder()`, `getFirstFolder()`, `getLastFolder()`, `getFolderCount()`).
 - [ ] Check if we use monolog? if not remove it from composer.json
 - [ ] add script to composer.json to run phpunit tests: "test": "php ./vendor/bin/phpunit", test:unit and test:integration
+- [ ] add docblock everywhere
+- [ ] make sure all relevant methods are included in readme and vice versa
+- [ ] make sure readme is up to date and has no typos and is easy to read and understand and is comprehensive.
 
 ## Improvements
 - Prefer a single `guessPathType()`/`determinePathType()` helper that returns the existing `PathType` enum over adding separate `isFile()`, `isFolder()`, and `isDot()` booleans; it would leverage the tracked `$path_type` state and avoid inconsistent heuristics.
