@@ -103,7 +103,7 @@ abstract class AbsolutePath
             : $this->asFolder();
     }
 
-    public function getNthFolder(int $nth, string $formatClassName = AbsoluteReferencePathFormat::class): AbsoluteReferencePathFormat|AbsoluteAccessPathFormat|AbsoluteAccessURIFormat|null
+    public function getNthFolder(int $nth, ?string $formatClassName = null): string|AbsoluteReferencePathFormat|AbsoluteAccessPathFormat|AbsoluteAccessURIFormat|null
     {
         if($this->path_type === PathType::UNKNOWN) {
             throw new UnknownIfFolderOrFileException('Unknown if the path is a folder or a file, call asFolder() or asFile() first.');
@@ -115,17 +115,21 @@ abstract class AbsolutePath
             return null;
         }
 
+        if($formatClassName === null) {
+            return $folders[$nth];
+        }
+
         $segments = array_slice($folders, 0, $nth + 1);
 
         return $this->buildFolderFormat($segments, $formatClassName);
     }
 
-    public function getFirstFolder(string $formatClassName = AbsoluteReferencePathFormat::class): AbsoluteReferencePathFormat|AbsoluteAccessPathFormat|AbsoluteAccessURIFormat|null
+    public function getFirstFolder(?string $formatClassName = null): string|AbsoluteReferencePathFormat|AbsoluteAccessPathFormat|AbsoluteAccessURIFormat|null
     {
         return $this->getNthFolder(0, $formatClassName);
     }
 
-    public function getLastFolder(string $formatClassName = AbsoluteReferencePathFormat::class): AbsoluteReferencePathFormat|AbsoluteAccessPathFormat|AbsoluteAccessURIFormat|null
+    public function getLastFolder(?string $formatClassName = null): string|AbsoluteReferencePathFormat|AbsoluteAccessPathFormat|AbsoluteAccessURIFormat|null
     {
         if($this->path_type === PathType::UNKNOWN) {
             throw new UnknownIfFolderOrFileException('Unknown if the path is a folder or a file, call asFolder() or asFile() first.');
@@ -135,6 +139,10 @@ abstract class AbsolutePath
 
         if(empty($folders)) {
             return null;
+        }
+
+        if($formatClassName === null) {
+            return $folders[count($folders) - 1];
         }
 
         return $this->buildFolderFormat($folders, $formatClassName);
@@ -163,8 +171,12 @@ abstract class AbsolutePath
         return $clone;
     }
 
-    public function getPath(): array 
+    public function getPath(?string $formatClassName = null): array|AbsoluteReferencePathFormat|AbsoluteAccessPathFormat|AbsoluteAccessURIFormat
     {
+        if($formatClassName !== null) {
+            return $this->buildPathFormat($formatClassName);
+        }
+
         return $this->path;
     }
 
@@ -177,13 +189,19 @@ abstract class AbsolutePath
         return $clone;
     }
 
-    public function getFolderPath(): array 
+    public function getFolderPath(?string $formatClassName = null): array|AbsoluteReferencePathFormat|AbsoluteAccessPathFormat|AbsoluteAccessURIFormat
     {
         if($this->path_type === PathType::UNKNOWN) {
             throw new UnknownIfFolderOrFileException('Unknown if the path is a folder or a file, call asFolder() or asFile() first.');
         }
 
-        return $this->getSanitizedFolderPath();
+        $folders = $this->getSanitizedFolderPath();
+
+        if($formatClassName === null) {
+            return $folders;
+        }
+
+        return $this->buildFolderFormat($folders, $formatClassName);
     }
 
     /**
@@ -464,6 +482,23 @@ abstract class AbsolutePath
         }
 
         throw new \InvalidArgumentException(sprintf('Unsupported folder format class "%s".', $formatClassName));
+    }
+
+    private function buildPathFormat(string $formatClassName): AbsoluteReferencePathFormat|AbsoluteAccessPathFormat|AbsoluteAccessURIFormat
+    {
+        if(is_a($formatClassName, AbsoluteReferencePathFormat::class, true)) {
+            return $this->getReferencePath();
+        }
+
+        if(is_a($formatClassName, AbsoluteAccessPathFormat::class, true)) {
+            return $this->getAccessPath();
+        }
+
+        if(is_a($formatClassName, AbsoluteAccessURIFormat::class, true)) {
+            return $this->getAccessURI();
+        }
+
+        throw new \InvalidArgumentException(sprintf('Unsupported path format class "%s".', $formatClassName));
     }
 
     private function composeFolderPath(array $segments, string $formatClassName): string
