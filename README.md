@@ -17,8 +17,9 @@
 - [ ] make sure all relevant methods are included in readme and vice versa
 - [ ] make sure readme is up to date and has no typos and is easy to read and understand and is comprehensive.
 - [ ] Add to every assertion in every test a detailed message, so we know what failed.
-- [ ] does this work: Path::create('C:/path/to/file.txt')->asFolder()->cd('path/fileB.txt') (= 'C:/path/to/path/fileB.txt') then -cd('..') should be 'C:/path/to' ? (but since we did a cd to a file, it probably doesn't know that was a file, so we need to call ->asFile() again after each cd? Make that clear in the readme if so.
 - [ ] Introduce a `getRelativePath(null|AbsolutePath|string $to)` method that computes the relative path from the current location to another absolute path, throwing if they don't share a common base. `null` means use the base path when create() was used. So `create('C:/a/b/c/d.txt')->asFile()->getRelativePath('C:/a/b')` would return `'c/d.txt'`. Can also return `../` when going up.
+- [ ] Add a `getCommonBasePath(AbsolutePath|string ...$paths): AbsolutePath` method that computes the deepest common base path shared by all given absolute paths. For example, `create('C:/a/b/c/d.txt')->asFile()->getCommonBasePath('C:/a/b/g/h/i.txt', $formatClassName = AbsoluteReferencePathFormat)` would return a `string`: `'C:/a/b'`.
+- [ ] 
 ## Improvements
 - Prefer a single `guessPathType()`/`determinePathType()` helper that returns the existing `PathType` enum over adding separate `isFile()`, `isFolder()`, and `isDot()` booleans; it would leverage the tracked `$path_type` state and avoid inconsistent heuristics.
 - Consider injecting a pluggable segment classifier that inspects the normalized reference path array (for example via `Utils::splitPathAndTrimSlashes()`) to decide whether a final token represents a file, folder, or dot entry, making custom rules easier to maintain.
