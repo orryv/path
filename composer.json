@@ -19,5 +19,8 @@
     },
     "require": {
         "monolog/monolog": "^3.8"
+    },
+    "scripts": {
+        "test": "./vendor/bin/phpunit --colors=always"
     }
 }
