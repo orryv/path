@@ -123,6 +123,71 @@ $path = Path::create('C:/path/to/folder/file.txt')
     ->cd('..'); // will throw an error
 ```
 
+### Folder helper accessors
+
+Call `asFile()` or `asFolder()` before reading folder helpers so the path knows which segments belong to directories. The helpers
+return value objects, allowing you to request the folder path in the reference, access-path, or access-URI representation.
+
+```php
+use Orryv\Path;
+use Orryv\Path\Models\AbsoluteAccessPathFormat;
+use Orryv\Path\Models\AbsoluteAccessURIFormat;
+use Orryv\Path\Models\AbsoluteReferencePathFormat;
+
+$path = Path::create('/var/www/html/index.php')
+    ->asFile();
+
+(string) $path->getFirstFolder(); // 'var'
+(string) $path->getNthFolder(1);  // 'www'
+(string) $path->getLastFolder();  // 'html'
+
+// Request a formatted path object instead of the plain folder name.
+$path->getFirstFolder(AbsoluteReferencePathFormat::class); // '/var'
+$path->getFirstFolder(AbsoluteAccessPathFormat::class);    // '/var'
+$path->getFirstFolder(AbsoluteAccessURIFormat::class);     // 'file:///var'
+
+$path->getFolderCount();     // 3
+$path->getNthFolder(10);     // null (index out of bounds)
+```
+
+The optional `$formatClassName` argument accepts the three format value objects exposed by the library:
+
+- `AbsoluteReferencePathFormat::class` (default for most APIs) yields the canonical reference form.
+- `AbsoluteAccessPathFormat::class` returns a PHP-friendly filesystem string (backslashes on Windows).
+- `AbsoluteAccessURIFormat::class` builds a `file://` or scheme-specific URI.
+
+When omitted the helpers return the bare folder name, which is convenient for comparisons and navigation logic.
+
+If you call `preserveEndSlash()` the helpers keep trailing separators in the requested format, which is useful for emphasising
+folder semantics on Windows access paths or URIs.
+
+```php
+use Orryv\Path;
+use Orryv\Path\Models\AbsoluteAccessPathFormat;
+
+$path = Path::create('C:/Projects/Demo/')
+    ->asFolder()
+    ->preserveEndSlash();
+
+(string) $path->getLastFolder(AbsoluteAccessPathFormat::class); // 'C:\\Projects\\Demo\\'
+(string) $path->getLastFolder();                               // 'Demo'
+```
+
+### Dot inference
+
+Call `asDot()` when you are not sure whether the last segment denotes a file or a folder. The helper inspects the trailing token:
+paths ending with `.` or `..` are treated as folders, while entries with an extension become files.
+
+```php
+use Orryv\Path;
+
+$path = Path::create('https://example.com/images/photo.jpg?download=1')
+    ->asDot();
+
+$path->getReferencePathFileExtension(); // 'jpg'
+$path->getFolderPath();                 // ['images']
+```
+
 ### Encoding
 In default, system paths are rawurlencoded for AccessURI. URIs (http://, ftp://, etc) are not DECODED. But you can change it if you want.
 
@@ -139,6 +204,31 @@ $path = Path::create('C:/path/to/file#.txt')
 $path = Path::create('https://website.com/path/to/page?query=string#fragment')
     ->asFile()
     ->setEncoding(Encoder::URLENCODE); // this will DECODE the # when getting ReferencePath()
+```
+
+### Converting complete paths between formats
+
+Use `getPath()` or `getFolderPath()` with a format class name to obtain the entire reference, access-path, or access-URI string
+for the current object. Without arguments they return normalized arrays, which is ideal for programmatic manipulation.
+
+```php
+use Orryv\Path;
+use Orryv\Path\Models\AbsoluteAccessPathFormat;
+use Orryv\Path\Models\AbsoluteAccessURIFormat;
+use Orryv\Path\Models\AbsoluteReferencePathFormat;
+
+$path = Path::create('/var/www/html/index.php')->asFile();
+
+$path->getPath();  // ['var', 'www', 'html', 'index.php']
+$path->getFolderPath(); // ['var', 'www', 'html']
+
+(string) $path->getPath(AbsoluteReferencePathFormat::class); // '/var/www/html/index.php'
+(string) $path->getPath(AbsoluteAccessPathFormat::class);    // '/var/www/html/index.php'
+(string) $path->getPath(AbsoluteAccessURIFormat::class);     // 'file:///var/www/html/index.php'
+
+(string) $path->getFolderPath(AbsoluteReferencePathFormat::class); // '/var/www/html'
+(string) $path->getFolderPath(AbsoluteAccessPathFormat::class);    // '/var/www/html'
+(string) $path->getFolderPath(AbsoluteAccessURIFormat::class);     // 'file:///var/www/html'
 ```
 
 
