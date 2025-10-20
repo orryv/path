@@ -34,7 +34,7 @@ class AbsolutePathHelpersTest extends TestCase
         $lastFolder = $path->getLastFolder(AbsoluteAccessPathFormat::class);
 
         $this->assertSame('C:\\Projects\\Demo\\', (string) $lastFolder);
-        $this->assertSame('C:/Projects/Demo/', (string) $path->getLastFolder());
+        $this->assertSame('Demo', $path->getLastFolder());
     }
 
     public function testCdSupportsArrayCommands(): void

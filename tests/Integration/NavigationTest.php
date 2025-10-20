@@ -178,16 +178,37 @@ class NavigationTest extends TestCase
         $path = Path::create(new AbsoluteReferencePathFormat('/var/www/html/index.php'))
             ->asFile();
 
-        $this->assertInstanceOf(AbsoluteReferencePathFormat::class, $path->getFirstFolder());
+        $this->assertSame('var', $path->getFirstFolder());
+        $this->assertSame('www', $path->getNthFolder(1));
+        $this->assertSame('html', $path->getLastFolder());
+
+        $this->assertInstanceOf(AbsoluteReferencePathFormat::class, $path->getFirstFolder(AbsoluteReferencePathFormat::class));
         $this->assertInstanceOf(AbsoluteAccessPathFormat::class, $path->getFirstFolder(AbsoluteAccessPathFormat::class));
         $this->assertInstanceOf(AbsoluteAccessURIFormat::class, $path->getFirstFolder(AbsoluteAccessURIFormat::class));
 
-        $this->assertEquals('/var', (string)$path->getFirstFolder());
-        $this->assertEquals('/var/www', (string)$path->getNthFolder(1));
-        $this->assertEquals('/var/www/html', (string)$path->getLastFolder());
-        $this->assertEquals('file:///var', (string)$path->getFirstFolder(AbsoluteAccessURIFormat::class));
-        $this->assertEquals('/var', (string)$path->getFirstFolder(AbsoluteAccessPathFormat::class));
+        $this->assertEquals('/var', (string) $path->getFirstFolder(AbsoluteReferencePathFormat::class));
+        $this->assertEquals('/var/www', (string) $path->getNthFolder(1, AbsoluteReferencePathFormat::class));
+        $this->assertEquals('/var/www/html', (string) $path->getLastFolder(AbsoluteReferencePathFormat::class));
+        $this->assertEquals('file:///var', (string) $path->getFirstFolder(AbsoluteAccessURIFormat::class));
+        $this->assertEquals('/var', (string) $path->getFirstFolder(AbsoluteAccessPathFormat::class));
         $this->assertEquals(3, $path->getFolderCount());
         $this->assertNull($path->getNthFolder(10));
+    }
+
+    public function testGetPathAndFolderPathFormats()
+    {
+        $path = Path::create(new AbsoluteReferencePathFormat('/var/www/html/index.php'))
+            ->asFile();
+
+        $this->assertSame(['var', 'www', 'html', 'index.php'], $path->getPath());
+        $this->assertSame(['var', 'www', 'html'], $path->getFolderPath());
+
+        $this->assertEquals($path->getReferencePath(), $path->getPath(AbsoluteReferencePathFormat::class));
+        $this->assertEquals($path->getAccessPath(), $path->getPath(AbsoluteAccessPathFormat::class));
+        $this->assertEquals($path->getAccessURI(), $path->getPath(AbsoluteAccessURIFormat::class));
+
+        $this->assertEquals('/var/www/html', (string) $path->getFolderPath(AbsoluteReferencePathFormat::class));
+        $this->assertEquals('/var/www/html', (string) $path->getFolderPath(AbsoluteAccessPathFormat::class));
+        $this->assertEquals('file:///var/www/html', (string) $path->getFolderPath(AbsoluteAccessURIFormat::class));
     }
 }
