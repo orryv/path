@@ -2,213 +2,111 @@
 
 namespace Tests\Integration;
 
-use PHPUnit\Framework\TestCase;
 use Orryv\Path;
-use Orryv\Path\Exceptions\UnknownIfFolderOrFileException;
-use Orryv\Path\Exceptions\AboveBaseFolderException;
-use Orryv\Path\Paths\AbsoluteUnixPath;
-use Orryv\Path\Enums\SystemPathLocationCategory;
-use Orryv\Path\Enums\OSFamily;
-use Orryv\Path\Models\AbsoluteReferencePathFormat;
-use Orryv\Path\Models\AbsoluteAccessPathFormat;
-use Orryv\Path\Models\AbsoluteAccessURIFormat;
+use Orryv\Path\Enums\PathFormat;
+use PHPUnit\Framework\TestCase;
 
 class NavigationTest extends TestCase
 {
-    ################
-    ###### CD ######
-    ################
-
-    public function testIfCdGoesUpOneLevel()
+    public function testCdWalksUpDirectories(): void
     {
-        $old_instance = Path::create(new AbsoluteReferencePathFormat('/var/bin/file.txt'))->asFile();
-        $new_instance = $old_instance->cd('..');
-        $expected = '/var';
-        $this->assertEquals($expected, $new_instance->getReferencePath());
+        $file = Path::file('/var/www/html/index.php', PathFormat::ACCESS_PATH);
+        $parent = $file->cd('..');
+
+        $this->assertSame('/var/www/html/', $parent->toString(PathFormat::REFERENCE_PATH));
+        $this->assertSame('/var/www/html/', $parent->toString(PathFormat::ACCESS_PATH));
     }
 
-    public function testExceptionWhenNotAsFileOrFolder()
+    public function testCdNavigatesIntoRelativeFolders(): void
     {
-        $this->expectException(UnknownIfFolderOrFileException::class);
-        $uri = Path::create(new AbsoluteReferencePathFormat('/var/bin/file.txt'));
-        $uri->cd('..');
+        $directory = Path::dir('/var/www/', PathFormat::ACCESS_PATH);
+        $next = $directory->cd('app/cache');
+
+        $this->assertSame('/var/www/app/cache/', $next->toString(PathFormat::REFERENCE_PATH));
+        $this->assertSame('/var/www/app/cache/', $next->toString(PathFormat::ACCESS_PATH));
     }
 
-    public function testIfCdGoesUpTwoLevels()
+    public function testCdHonorsBaseDirWhenResettingToRoot(): void
     {
-        $old_instance = Path::create(new AbsoluteReferencePathFormat('/var/bin/file.txt'))->asFile();
-        $new_instance = $old_instance->cd('../..');
-        $expected = '/';
-        $this->assertEquals($expected, $new_instance->getReferencePath());
+        $base = Path::dir('/var/www/', PathFormat::REFERENCE_PATH);
+        $file = Path::file('/var/www/html/index.php', PathFormat::REFERENCE_PATH)->withBaseDir($base);
+
+        $rooted = $file->cd('/');
+
+        $this->assertSame('/var/www/', $rooted->toString(PathFormat::REFERENCE_PATH));
     }
 
-    public function testIfCdGoesDownOneLevel()
+    public function testCdPreventsGoingAboveBase(): void
     {
-        $old_instance = Path::create(new AbsoluteReferencePathFormat('/var/bin/file.txt'))->asFile();
-        $new_instance = $old_instance->cd('foo')->asFolder();
-        $expected = '/var/bin/foo';
-        $this->assertEquals($expected, $new_instance->getReferencePath());
-        $this->assertEquals(['var', 'bin', 'foo'], $new_instance->getPath());
-        $this->assertEquals(['var', 'bin', 'foo'], $new_instance->getFolderPath());
+        $base = Path::dir('/var/www/', PathFormat::REFERENCE_PATH);
+        $file = Path::file('/var/www/html/index.php', PathFormat::REFERENCE_PATH)->withBaseDir($base);
+
+        $this->expectException(\OutOfBoundsException::class);
+        $file->cd('../../..');
     }
 
-    public function testIfItGoesUpTwoTimesInDifferentCalls()
+    public function testCdResolvesDotSegmentsWithinDirectory(): void
     {
-        $old_instance = Path::create(new AbsoluteReferencePathFormat('/var/bin/file.txt'))->asFile();
-        $new_instance = $old_instance->cd('..')->cd('..');
-        $expected = '/';
-        $this->assertEquals($expected, $new_instance->getReferencePath());
+        $directory = Path::dir('/srv/www/app/', PathFormat::REFERENCE_PATH);
+
+        $resolved = $directory->cd('./storage/../logs/./today/');
+
+        $this->assertSame('/srv/www/app/logs/today/', $resolved->toString(PathFormat::REFERENCE_PATH));
+        $this->assertSame('/srv/www/app/logs/today/', $resolved->toString(PathFormat::ACCESS_PATH));
     }
 
-    public function testIfAsFolderChangesPath()
+    public function testCdWithinUncRootKeepsShare(): void
     {
-        $old_instance = Path::create(new AbsoluteReferencePathFormat('/var/bin/file.txt'))->asFile();
-        $expected = '/var/bin/file.txt';
-        $this->assertEquals($expected, $old_instance->getReferencePath());
+        $unc = Path::dir('\\\\server\\share\\', PathFormat::ACCESS_PATH);
+
+        $resolved = $unc->cd('dept/./reports/../reports/2023');
+
+        $this->assertSame('//server/share/dept/reports/2023/', $resolved->toString(PathFormat::REFERENCE_PATH));
+        $this->assertSame('\\\\server\\share\\dept\\reports\\2023\\', $resolved->toString(PathFormat::ACCESS_PATH));
     }
 
-    public function testIfExceptionWhenAboveBaseFolder()
+    public function testCommonBasePathAcrossUrls(): void
     {
-        $base_folder = Path::create(new AbsoluteReferencePathFormat('/var/bin/file.txt'))->asFile();
-        $this->expectException(AboveBaseFolderException::class);
-        $instance = Path::create(new AbsoluteReferencePathFormat('/var/bin/folder/file.txt'))
-            ->setBasePath($base_folder)
-            ->asFile();
-        $new = $instance->cd('../..');
+        $base = Path::url('https://example.com/a/b/index.html', PathFormat::ACCESS_URI);
+        $other = Path::url('https://example.com/a/c/app.js', PathFormat::ACCESS_URI);
+
+        $common = $base->getCommonBasePath($other, PathFormat::REFERENCE_PATH);
+
+        $this->assertSame('https://example.com/a/', $common->toString(PathFormat::REFERENCE_PATH));
+        $this->assertSame('https://example.com/a/', $common->toString(PathFormat::ACCESS_PATH));
     }
 
-    public function testIfNavigatesToFolders()
+    public function testCommonBasePathOnWindowsFileTree(): void
     {
-        $old_instance = Path::create(new AbsoluteReferencePathFormat('/var/bin/file.txt'))->asFile();
-        $new_instance = $old_instance->cd('foo/bar')->asFolder();
-        $expected = '/var/bin/foo/bar';
-        $this->assertEquals($expected, $new_instance->getReferencePath());
+        $left = Path::file('C:\\Projects\\App\\src\\main.php', PathFormat::ACCESS_PATH);
+        $right = Path::file('C:\\Projects\\App\\tests\\Unit\\AppTest.php', PathFormat::ACCESS_PATH);
+
+        $common = $left->getCommonBasePath($right, PathFormat::REFERENCE_PATH);
+
+        $this->assertSame('C:/Projects/App/', $common->toString(PathFormat::REFERENCE_PATH));
+        $this->assertSame('C:\\Projects\\App\\', $common->toString(PathFormat::ACCESS_PATH));
     }
 
-    public function testIfGoesToBaseFolder()
+    public function testCommonBasePathAcrossUncPaths(): void
     {
-        $base_folder = Path::create(new AbsoluteReferencePathFormat('/var/bin/file.txt'))->asFile();
-        $instance = Path::create(new AbsoluteReferencePathFormat('/var/bin/folder/file.txt'))
-            ->setBasePath($base_folder)
-            ->asFile();
-        $new = $instance->cd('/');
-        $expected = '/var/bin';
-        $this->assertEquals($expected, $new->getReferencePath());
+        $first = Path::file('\\\\server\\share\\dept\\reports\\Q1.pdf', PathFormat::ACCESS_PATH);
+        $second = Path::dir('\\\\server\\share\\dept\\reports\\archive\\', PathFormat::ACCESS_PATH);
+
+        $common = $first->getCommonBasePath($second, PathFormat::REFERENCE_PATH);
+
+        $this->assertSame('//server/share/dept/reports/', $common->toString(PathFormat::REFERENCE_PATH));
+        $this->assertSame('\\\\server\\share\\dept\\reports\\', $common->toString(PathFormat::ACCESS_PATH));
     }
 
-    public function testIfGoesToFolderInBaseFolder()
+    public function testPreserveEndSlashControlsDirectoryFormatting(): void
     {
-        $base_folder = Path::create(new AbsoluteReferencePathFormat('/var/bin/file.txt'))->asFile();
-        $instance = Path::create(new AbsoluteReferencePathFormat('/var/bin/folder/bar/file.txt'))
-            ->setBasePath($base_folder)
-            ->asFile();
-        $new = $instance->cd('/test');
-        $expected = '/var/bin/test';
-        $this->assertEquals($expected, $new->getReferencePath());
-    }
+        $directory = Path::dir('C:/Projects/Demo', PathFormat::REFERENCE_PATH);
+        $withSlash = $directory->withPreserveEndSlash(true);
+        $withoutSlash = $directory->withPreserveEndSlash(false);
 
-    public function testIfGoesToRootFolder()
-    {
-        $instance = Path::create(new AbsoluteReferencePathFormat('/var/bin/folder/file.txt'))
-            ->asFile();
-        $new = $instance->cd('/');
-        $expected = '/';
-        $this->assertEquals($expected, $new->getReferencePath());
-    }
-
-    public function testIfGoesToFolderInRootFolder()
-    {
-        $instance = Path::create(new AbsoluteReferencePathFormat('/var/bin/folder/file.txt'))
-            ->asFile();
-        $new = $instance->cd('/test');
-        $expected = '/test';
-        $this->assertEquals($expected, $new->getReferencePath());
-    }
-
-    public function testIfExceptionWhenAboveBaseFolderInRootFolder()
-    {
-        $this->expectException(AboveBaseFolderException::class);
-        $base_folder = Path::create(new AbsoluteReferencePathFormat('/var/bin/file.txt'))->asFile();
-        $instance = Path::create(new AbsoluteReferencePathFormat('/var/bin/folder/file.txt'))
-            ->setBasePath($base_folder)
-            ->asFile();
-        $new = $instance->cd('/..');
-    }
-
-    public function testAsDotDetectsFiles()
-    {
-        $path = Path::create(new AbsoluteReferencePathFormat('https://example.com/assets/image.png?ver=1#fragment'))
-            ->asDot();
-
-        $this->assertEquals('image', $path->getReferencePathFileName());
-        $this->assertEquals('png', $path->getReferencePathFileExtension());
-    }
-
-    public function testAsDotTreatsFoldersWithoutDots()
-    {
-        $path = Path::create(new AbsoluteReferencePathFormat('https://example.com/assets/'))
-            ->asDot();
-
-        $this->assertEquals(['assets'], $path->getFolderPath());
-        $this->assertNull($path->getReferencePathFileName());
-    }
-
-    public function testPreserveEndSlashAddsTrailingSeparators()
-    {
-        $path = Path::create(new AbsoluteReferencePathFormat('/var/www'))
-            ->asFolder()
-            ->preserveEndSlash();
-
-        $this->assertEquals('/var/www/', $path->getAccessPath());
-        $this->assertEquals('file:///var/www/', $path->getAccessURI());
-        $this->assertEquals(['var', 'www'], $path->getFolderPath());
-    }
-
-    public function testPreserveEndSlashDoesNotAffectFiles()
-    {
-        $path = Path::create(new AbsoluteReferencePathFormat('/var/www/file.txt'))
-            ->asFile()
-            ->preserveEndSlash();
-
-        $this->assertEquals('/var/www/file.txt', $path->getAccessPath());
-    }
-
-    public function testFolderHelpersReturnFormattedPaths()
-    {
-        $path = Path::create(new AbsoluteReferencePathFormat('/var/www/html/index.php'))
-            ->asFile();
-
-        $this->assertSame('var', $path->getFirstFolder());
-        $this->assertSame('www', $path->getNthFolder(1));
-        $this->assertSame('html', $path->getLastFolder());
-
-        $this->assertInstanceOf(AbsoluteReferencePathFormat::class, $path->getFirstFolder(AbsoluteReferencePathFormat::class));
-        $this->assertInstanceOf(AbsoluteAccessPathFormat::class, $path->getFirstFolder(AbsoluteAccessPathFormat::class));
-        $this->assertInstanceOf(AbsoluteAccessURIFormat::class, $path->getFirstFolder(AbsoluteAccessURIFormat::class));
-
-        $this->assertEquals('/var', (string) $path->getFirstFolder(AbsoluteReferencePathFormat::class));
-        $this->assertEquals('/var/www', (string) $path->getNthFolder(1, AbsoluteReferencePathFormat::class));
-        $this->assertEquals('/var/www/html', (string) $path->getLastFolder(AbsoluteReferencePathFormat::class));
-        $this->assertEquals('file:///var', (string) $path->getFirstFolder(AbsoluteAccessURIFormat::class));
-        $this->assertEquals('/var', (string) $path->getFirstFolder(AbsoluteAccessPathFormat::class));
-        $this->assertEquals(3, $path->getFolderCount());
-        $this->assertNull($path->getNthFolder(10));
-    }
-
-    public function testGetPathAndFolderPathFormats()
-    {
-        $path = Path::create(new AbsoluteReferencePathFormat('/var/www/html/index.php'))
-            ->asFile();
-
-        $this->assertSame(['var', 'www', 'html', 'index.php'], $path->getPath());
-        $this->assertSame(['var', 'www', 'html'], $path->getFolderPath());
-
-        $this->assertEquals($path->getReferencePath(), $path->getPath(AbsoluteReferencePathFormat::class));
-        $this->assertEquals($path->getAccessPath(), $path->getPath(AbsoluteAccessPathFormat::class));
-        $this->assertEquals($path->getAccessURI(), $path->getPath(AbsoluteAccessURIFormat::class));
-
-        $this->assertEquals('/var/www/html', (string) $path->getFolderPath(AbsoluteReferencePathFormat::class));
-        $this->assertEquals('/var/www/html', (string) $path->getFolderPath(AbsoluteAccessPathFormat::class));
-        $this->assertEquals('file:///var/www/html', (string) $path->getFolderPath(AbsoluteAccessURIFormat::class));
+        $this->assertSame('C:/Projects/Demo/', $withSlash->toString(PathFormat::REFERENCE_PATH));
+        $this->assertSame('C:/Projects/Demo', $withoutSlash->toString(PathFormat::REFERENCE_PATH));
+        $this->assertSame('C:\\Projects\\Demo\\', $withSlash->toString(PathFormat::ACCESS_PATH));
+        $this->assertSame('C:\\Projects\\Demo', $withoutSlash->toString(PathFormat::ACCESS_PATH));
     }
 }
