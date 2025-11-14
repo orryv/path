@@ -18,7 +18,8 @@
         "phpunit/phpunit": "^11.4"
     },
     "require": {
-        "monolog/monolog": "^3.8"
+        "monolog/monolog": "^3.8",
+        "orryv/x-string": "^1.1"
     },
     "scripts": {
         "test": "./vendor/bin/phpunit --colors=always"
